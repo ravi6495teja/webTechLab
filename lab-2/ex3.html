@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Drag & Drop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        #taskInput {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #taskInput:focus {
+            border-color: #667eea;
+        }
+
+        #addTaskBtn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #addTaskBtn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .column {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-height: 400px;
+        }
+
+        .column-header {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid;
+            text-align: center;
+        }
+
+        .column.todo .column-header {
+            color: #3498db;
+            border-color: #3498db;
+        }
+
+        .column.in-progress .column-header {
+            color: #f39c12;
+            border-color: #f39c12;
+        }
+
+        .column.completed .column-header {
+            color: #2ecc71;
+            border-color: #2ecc71;
+        }
+
+        .task-list {
+            min-height: 300px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .task-list.drag-over {
+            background-color: #f0f0f0;
+            border: 2px dashed #667eea;
+        }
+
+        .task-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            cursor: move;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+
+        .task-card.completed-task {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        }
+
+        .task-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 8px;
+            word-wrap: break-word;
+        }
+
+        .task-date {
+            font-size: 0.85em;
+            opacity: 0.9;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2ecc71;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-weight: bold;
+            animation: slideIn 0.5s, slideOut 0.5s 2.5s;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #95a5a6;
+            padding: 40px 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Task Manager - Drag & Drop</h1>
+
+        <div class="input-section">
+            <input type="text" id="taskInput" placeholder="Enter task name...">
+            <button id="addTaskBtn">➕ Add Task</button>
+        </div>
+
+        <div class="board">
+            <div class="column todo">
+                <div class="column-header">📝 To Do</div>
+                <div class="task-list" id="todoList">
+                    <div class="empty-state">Drag tasks here or add new ones</div>
+                </div>
+            </div>
+
+            <div class="column in-progress">
+                <div class="column-header">⚙️ In Progress</div>
+                <div class="task-list" id="inProgressList">
+                    <div class="empty-state">Drag tasks here</div>
+                </div>
+            </div>
+
+            <div class="column completed">
+                <div class="column-header">✅ Completed</div>
+                <div class="task-list" id="completedList">
+                    <div class="empty-state">Drag completed tasks here</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const taskInput = document.getElementById('taskInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const todoList = document.getElementById('todoList');
+        const inProgressList = document.getElementById('inProgressList');
+        const completedList = document.getElementById('completedList');
+
+        // Add task function
+        function addTask() {
+            const taskName = taskInput.value.trim();
+            
+            if (taskName === '') {
+                alert('Please enter a task name!');
+                return;
+            }
+
+            // Create task card
+            const taskCard = document.createElement('div');
+            taskCard.className = 'task-card';
+            taskCard.draggable = true;
+            
+            // Get current date
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            taskCard.innerHTML = `
+                <div class="task-name">${taskName}</div>
+                <div class="task-date">📅 ${formattedDate}</div>
+            `;
+
+            // Remove empty state if it exists
+            const emptyState = todoList.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            // Add drag event listeners
+            taskCard.addEventListener('dragstart', handleDragStart);
+            taskCard.addEventListener('dragend', handleDragEnd);
+
+            // Add task to To Do column
+            todoList.appendChild(taskCard);
+
+            // Clear input
+            taskInput.value = '';
+            taskInput.focus();
+        }
+
+        // Event listeners for add task
+        addTaskBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addTask();
+            }
+        });
+
+        // Drag and drop functionality
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+
+            this.classList.remove('drag-over');
+
+            if (draggedElement && draggedElement !== this) {
+                // Remove empty state if exists
+                const emptyState = this.querySelector('.empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                // Add task to new column
+                this.appendChild(draggedElement);
+
+                // Check if dropped in completed column
+                if (this.id === 'completedList') {
+                    draggedElement.classList.add('completed-task');
+                    showCompletionMessage();
+                } else {
+                    draggedElement.classList.remove('completed-task');
+                }
+
+                // Add empty state back if column is empty
+                checkEmptyColumns();
+            }
+
+            return false;
+        }
+
+        function showCompletionMessage() {
+            const message = document.createElement('div');
+            message.className = 'message';
+            message.textContent = '✅ Task Completed Successfully';
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.remove();
+            }, 3000);
+        }
+
+        function checkEmptyColumns() {
+            [todoList, inProgressList, completedList].forEach(list => {
+                const tasks = list.querySelectorAll('.task-card');
+                if (tasks.length === 0 && !list.querySelector('.empty-state')) {
+                    const emptyState = document.createElement('div');
+                    emptyState.className = 'empty-state';
+                    emptyState.textContent = list.id === 'todoList' ? 
+                        'Drag tasks here or add new ones' : 'Drag tasks here';
+                    list.appendChild(emptyState);
+                }
+            });
+        }
+
+        // Add event listeners to all task lists
+        const taskLists = [todoList, inProgressList, completedList];
+        taskLists.forEach(list => {
+            list.addEventListener('dragover', handleDragOver);
+            list.addEventListener('dragenter', handleDragEnter);
+            list.addEventListener('dragleave', handleDragLeave);
+            list.addEventListener('drop', handleDrop);
+        });
+    </script>
+</body>
+</html>

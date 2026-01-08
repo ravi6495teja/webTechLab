@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Audio and Video Players</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #67e010 0%, #c11d8a 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .player-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        audio, video {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #000;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .volume-control label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            cursor: pointer;
+        }
+
+        .time-display {
+            background: #ecf0f1;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .info-text {
+            color: #7f8c8d;
+            font-style: italic;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 HTML5 Multimedia Players 🎬</h1>
+
+        <!-- Audio Player Section -->
+        <div class="player-section">
+            <h2>🎵 Audio Player</h2>
+            <audio id="audioPlayer">
+                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            
+            <div class="controls">
+                <button id="audioPlay">▶ Play</button>
+                <button id="audioPause">⏸ Pause</button>
+                
+                <div class="volume-control">
+                    <label for="audioVolume">🔊 Volume:</label>
+                    <input type="range" id="audioVolume" min="0" max="100" value="50">
+                </div>
+                
+                <div class="time-display" id="audioTime">
+                    Time: 0:00 / 0:00
+                </div>
+            </div>
+            
+            <p class="info-text">Sample audio track for demonstration</p>
+        </div>
+
+        <!-- Video Player Section -->
+        <div class="player-section">
+            <h2>🎬 Video Player</h2>
+            <video id="videoPlayer">
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                Your browser does not support the video element.
+            </video>
+            
+            <div class="controls">
+                <button id="videoPlay">▶ Play</button>
+                <button id="videoPause">⏸ Pause</button>
+                
+                <div class="volume-control">
+                    <label for="videoVolume">🔊 Volume:</label>
+                    <input type="range" id="videoVolume" min="0" max="100" value="50">
+                </div>
+                
+                <div class="time-display" id="videoTime">
+                    Time: 0:00 / 0:00
+                </div>
+            </div>
+            
+            <p class="info-text">Sample video (Big Buck Bunny) for demonstration</p>
+        </div>
+    </div>
+
+    <script>
+        // Audio Player Controls
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioPlayBtn = document.getElementById('audioPlay');
+        const audioPauseBtn = document.getElementById('audioPause');
+        const audioVolumeControl = document.getElementById('audioVolume');
+        const audioTimeDisplay = document.getElementById('audioTime');
+
+        // Set initial volume
+        audioPlayer.volume = 0.5;
+
+        // Audio Play Button
+        audioPlayBtn.addEventListener('click', () => {
+            audioPlayer.play();
+        });
+
+        // Audio Pause Button
+        audioPauseBtn.addEventListener('click', () => {
+            audioPlayer.pause();
+        });
+
+        // Audio Volume Control
+        audioVolumeControl.addEventListener('input', (e) => {
+            audioPlayer.volume = e.target.value / 100;
+        });
+
+        // Audio Time Update
+        audioPlayer.addEventListener('timeupdate', () => {
+            const currentTime = formatTime(audioPlayer.currentTime);
+            const duration = formatTime(audioPlayer.duration);
+            audioTimeDisplay.textContent = `Time: ${currentTime} / ${duration}`;
+        });
+
+        // Video Player Controls
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoPlayBtn = document.getElementById('videoPlay');
+        const videoPauseBtn = document.getElementById('videoPause');
+        const videoVolumeControl = document.getElementById('videoVolume');
+        const videoTimeDisplay = document.getElementById('videoTime');
+
+        // Set initial volume
+        videoPlayer.volume = 0.5;
+
+        // Video Play Button
+        videoPlayBtn.addEventListener('click', () => {
+            videoPlayer.play();
+        });
+
+        // Video Pause Button
+        videoPauseBtn.addEventListener('click', () => {
+            videoPlayer.pause();
+        });
+
+        // Video Volume Control
+        videoVolumeControl.addEventListener('input', (e) => {
+            videoPlayer.volume = e.target.value / 100;
+        });
+
+        // Video Time Update
+        videoPlayer.addEventListener('timeupdate', () => {
+            const currentTime = formatTime(videoPlayer.currentTime);
+            const duration = formatTime(videoPlayer.duration);
+            videoTimeDisplay.textContent = `Time: ${currentTime} / ${duration}`;
+        });
+
+        // Helper function to format time (seconds to MM:SS)
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+    </script>
+</body>
+</html>

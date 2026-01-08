@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Canvas Exercise</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #142467 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #bcb2b2;
+            margin: 0 0 20px 0;
+        }
+        
+        canvas {
+            border: 2px solid #cbbaba;
+            border-radius: 8px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>HTML5 Canvas Drawing</h1>
+        <canvas id="myCanvas" width="500" height="300"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Draw a filled rectangle
+        ctx.fillStyle = '#3498db';
+        ctx.fillRect(50, 50, 150, 100);
+
+        // Draw a filled circle
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(350, 100, 60, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw a straight line
+        ctx.strokeStyle = '#2ecc71';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(50, 200);
+        ctx.lineTo(450, 200);
+        ctx.stroke();
+
+        // Draw text inside the canvas
+        ctx.fillStyle = '#34495e';
+        ctx.font = 'bold 32px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('HTML5 Canvas', 250, 260);
+    </script>
+</body>
+</html>
