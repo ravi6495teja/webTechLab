@@ -1,0 +1,173 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Stage Form</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 400px;
+            margin: auto;
+        }
+
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+        }
+
+        .progress {
+            width: 100%;
+            background-color: #ddd;
+            height: 20px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: green;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Multi-Stage Registration Form</h2>
+
+<div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<form id="multiForm">
+
+    <!-- Stage 1 -->
+    <div class="stage active">
+        <h3>Stage 1: Personal Info</h3>
+        Name: <input type="text" id="name"><br><br>
+        Email: <input type="email" id="email"><br><br>
+        <button type="button" onclick="nextStage()">Next</button>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="stage">
+        <h3>Stage 2: Demographics</h3>
+        Age: <input type="number" id="age"><br><br>
+        Gender:
+        <select id="gender">
+            <option value="">Select</option>
+            <option>Male</option>
+            <option>Female</option>
+        </select><br><br>
+        <button type="button" onclick="prevStage()">Back</button>
+        <button type="button" onclick="nextStage()">Next</button>
+    </div>
+
+    <!-- Stage 3 -->
+    <div class="stage">
+        <h3>Stage 3: Account Setup</h3>
+        Username: <input type="text" id="username"><br><br>
+        Password: <input type="password" id="password"><br><br>
+        <button type="button" onclick="prevStage()">Back</button>
+        <button type="button" onclick="nextStage()">Next</button>
+    </div>
+
+    <!-- Stage 4 -->
+    <div class="stage">
+        <h3>Stage 4: Review & Submit</h3>
+        <p>All details validated successfully.</p>
+        <button type="button" onclick="prevStage()">Back</button>
+        <button type="submit">Submit</button>
+    </div>
+
+</form>
+
+<script>
+    let currentStage = 0;
+    let stages = document.querySelectorAll(".stage");
+    let progressBar = document.getElementById("progressBar");
+
+    // Temporary storage
+    let formData = {};
+
+    function showStage(index) {
+        stages.forEach(stage => stage.classList.remove("active"));
+        stages[index].classList.add("active");
+        progressBar.style.width = ((index + 1) / stages.length) * 100 + "%";
+    }
+
+    function nextStage() {
+        if (!validateStage()) return;
+        currentStage++;
+        showStage(currentStage);
+    }
+
+    function prevStage() {
+        currentStage--;
+        showStage(currentStage);
+    }
+
+    function validateStage() {
+
+        if (currentStage === 0) {
+            let name = document.getElementById("name").value;
+            let email = document.getElementById("email").value;
+
+            if (name === "" || !email.includes("@")) {
+                alert("Enter valid Name and Email");
+                return false;
+            }
+
+            formData.name = name;
+            formData.email = email;
+        }
+
+        if (currentStage === 1) {
+            let age = document.getElementById("age").value;
+            let gender = document.getElementById("gender").value;
+
+            if (age < 18 || gender === "") {
+                alert("Age must be 18 or above and Gender is required");
+                return false;
+            }
+
+            formData.age = age;
+            formData.gender = gender;
+        }
+
+        if (currentStage === 2) {
+            let username = document.getElementById("username").value;
+            let password = document.getElementById("password").value;
+
+            if (username.length < 4 || password.length < 6) {
+                alert("Username must be 4+ chars and Password 6+ chars");
+                return false;
+            }
+
+            formData.username = username;
+            formData.password = password;
+        }
+
+        return true;
+    }
+
+    document.getElementById("multiForm").addEventListener("submit", function(e) {
+        if (currentStage !== stages.length - 1) {
+            e.preventDefault();
+            alert("Please complete all stages");
+        } else {
+            alert("Form Submitted Successfully");
+            console.log(formData);
+        }
+    });
+</script>
+
+</body>
+</html>

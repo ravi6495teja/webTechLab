@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Survey Builder</title>
+
+<style>
+body
+{
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    padding: 20px;
+}
+
+.container
+{
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.35);
+}
+
+h1
+{
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.progress-bar
+{
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.progress
+{
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    transition: width 0.4s;
+}
+
+.question
+{
+    margin-bottom: 22px;
+}
+
+label
+{
+    font-weight: bold;
+}
+
+.required
+{
+    color: red;
+}
+
+input[type="text"], textarea
+{
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+textarea
+{
+    resize: vertical;
+}
+
+.options label
+{
+    display: block;
+    margin-top: 4px;
+}
+
+.counter
+{
+    font-size: 12px;
+    color: gray;
+    text-align: right;
+}
+
+.error
+{
+    font-size: 13px;
+    color: red;
+    margin-top: 4px;
+}
+
+button
+{
+    width: 100%;
+    padding: 14px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+button:disabled
+{
+    background: gray;
+    cursor: not-allowed;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>📊 Course Feedback Survey</h1>
+
+<div class="progress-bar">
+    <div class="progress" id="progress"></div>
+</div>
+
+<form id="surveyForm"></form>
+
+<button id="submitBtn" disabled>Submit Survey</button>
+
+</div>
+
+<script>
+/* 🧠 Survey Questions Configuration */
+const questions =
+[
+    { id:"q1", text:"Full Name", type:"text", required:true, min:3, max:30 },
+
+    { id:"q2", text:"Email ID", type:"text", required:true, min:6, max:40, isEmail:true },
+
+    { id:"q3", text:"College / University", type:"text", required:true, min:3, max:40 },
+
+    { id:"q4", text:"Department", type:"radio", required:true,
+      options:["CSE","ECE","EEE","MECH","CIVIL","OTHER"] },
+
+    { id:"q5", text:"Year of Study", type:"radio", required:true,
+      options:["1st Year","2nd Year","3rd Year","4th Year"] },
+
+    { id:"q6", text:"Overall Course Satisfaction", type:"radio", required:true,
+      options:["Very Satisfied","Satisfied","Neutral","Unsatisfied"] },
+
+    { id:"q7", text:"Course Difficulty Level", type:"radio", required:true,
+      options:["Easy","Moderate","Hard"] },
+
+    { id:"q8", text:"Technologies Learned (Select 1–4)", type:"checkbox", required:true,
+      min:1, max:4, options:["HTML","CSS","JavaScript","React","Node.js","Python"] },
+
+    { id:"q9", text:"Tools Used (Select 1–4)", type:"checkbox", required:true,
+      min:1, max:4, options:["VS Code","GitHub","Chrome DevTools","Postman","Figma"] },
+
+    { id:"q10", text:"Did the course improve problem-solving skills?", type:"radio", required:true,
+      options:["Yes","No","Not Sure"] },
+
+    { id:"q11", text:"Confidence Level After Course", type:"radio", required:true,
+      options:["Very High","High","Medium","Low"] },
+
+    { id:"q12", text:"What did you like most about the course?", type:"textarea",
+      required:true, max:120 },
+
+    { id:"q13", text:"What can be improved in the course?", type:"textarea",
+      required:true, max:120 },
+
+    { id:"q14", text:"Would you recommend this course to others?", type:"radio", required:true,
+      options:["Definitely","Maybe","No"] },
+
+    { id:"q15", text:"Additional Comments (Optional)", type:"textarea",
+      required:false, max:150 }
+];
+
+const form = document.getElementById("surveyForm");
+const submitBtn = document.getElementById("submitBtn");
+const progress = document.getElementById("progress");
+
+/* 🔧 Generate Survey Dynamically */
+function generateSurvey()
+{
+    questions.forEach((q, index) =>
+    {
+        const div = document.createElement("div");
+        div.className = "question";
+        div.id = q.id;
+
+        const label = document.createElement("label");
+        label.innerHTML = `${index + 1}. ${q.text} ${q.required ? '<span class="required">*</span>' : ''}`;
+        div.appendChild(label);
+
+        if(q.type === "text" || q.type === "textarea")
+        {
+            const field = document.createElement(q.type === "text" ? "input" : "textarea");
+            if(q.type === "text") field.type = "text";
+            field.oninput = validateForm;
+            div.appendChild(field);
+
+            if(q.max)
+            {
+                const counter = document.createElement("div");
+                counter.className = "counter";
+                counter.innerText = `0 / ${q.max}`;
+                field.addEventListener("input", () =>
+                {
+                    counter.innerText = `${field.value.length} / ${q.max}`;
+                });
+                div.appendChild(counter);
+            }
+        }
+
+        if(q.type === "radio" || q.type === "checkbox")
+        {
+            const optDiv = document.createElement("div");
+            optDiv.className = "options";
+
+            q.options.forEach(opt =>
+            {
+                optDiv.innerHTML += `
+                <label>
+                    <input type="${q.type}" name="${q.id}" onchange="validateForm()">
+                    ${opt}
+                </label>`;
+            });
+
+            div.appendChild(optDiv);
+        }
+
+        const error = document.createElement("div");
+        error.className = "error";
+        div.appendChild(error);
+
+        form.appendChild(div);
+    });
+}
+
+/* ✅ Validation Logic */
+function validateForm()
+{
+    let validCount = 0;
+
+    questions.forEach(q =>
+    {
+        const div = document.getElementById(q.id);
+        const error = div.querySelector(".error");
+        error.innerText = "";
+        let valid = true;
+
+        if(q.type === "text")
+        {
+            const input = div.querySelector("input");
+
+            if(q.required && input.value.trim() === "")
+                valid = false;
+            else if(input.value.length < q.min || input.value.length > q.max)
+                valid = false;
+            else if(q.isEmail)
+            {
+                const emailPattern =
+                /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+                if(!emailPattern.test(input.value))
+                {
+                    error.innerText = "Enter a valid email address";
+                    valid = false;
+                }
+            }
+        }
+
+        if(q.type === "textarea")
+        {
+            const ta = div.querySelector("textarea");
+            if(q.required && ta.value.trim() === "")
+                valid = false;
+            else if(ta.value.length > q.max)
+                valid = false;
+        }
+
+        if(q.type === "radio")
+        {
+            if(!div.querySelector("input:checked"))
+                valid = false;
+        }
+
+        if(q.type === "checkbox")
+        {
+            const count = div.querySelectorAll("input:checked").length;
+            if(count < q.min || count > q.max)
+                valid = false;
+        }
+
+        if(!valid && error.innerText === "")
+            error.innerText = "Please answer this question correctly";
+
+        if(valid) validCount++;
+    });
+
+    progress.style.width = (validCount / questions.length * 100) + "%";
+    submitBtn.disabled = validCount !== questions.length;
+}
+
+/* 🚫 Prevent Submit */
+submitBtn.addEventListener("click", e =>
+{
+    e.preventDefault();
+    alert("Survey Submitted Successfully 🎉");
+});
+
+generateSurvey();
+</script>
+
+</body>
+</html>
