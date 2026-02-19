@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AJAX Product Search</title>
+  <style>
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+      max-width: 800px; 
+      margin: 0 auto; 
+      padding: 40px 20px; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    .search-container { 
+      background: white; 
+      padding: 30px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+    }
+    h1 { text-align: center; color: #333; margin-bottom: 10px; }
+    .search-box { 
+      position: relative; 
+      margin-bottom: 20px;
+    }
+    input { 
+      width: 100%; 
+      padding: 16px 20px 16px 50px; 
+      border: 2px solid #e1e5e9; 
+      border-radius: 12px; 
+      font-size: 18px; 
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+    input:focus { outline: none; border-color: #4f46e5; }
+    .search-icon { 
+      position: absolute; 
+      left: 18px; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      color: #9ca3af; 
+      font-size: 20px;
+    }
+    .loading { color: #6b7280; font-style: italic; margin: 10px 0; display: none; }
+    .results { 
+      min-height: 20px;
+    }
+    .no-results { 
+      text-align: center; 
+      color: #6b7280; 
+      font-style: italic; 
+      padding: 40px 20px; 
+      background: #f9fafb; 
+      border-radius: 12px;
+    }
+    .product-grid {
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); 
+      gap: 20px; 
+      margin-top: 20px;
+    }
+    .product-card { 
+      background: white; 
+      border-radius: 12px; 
+      padding: 20px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .product-card:hover { 
+      transform: translateY(-4px); 
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .product-name { 
+      font-size: 18px; 
+      font-weight: 600; 
+      color: #1f2937; 
+      margin-bottom: 8px;
+    }
+    .product-category { 
+      color: #6b7280; 
+      font-size: 14px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    .product-price { 
+      font-size: 24px; 
+      font-weight: 700; 
+      color: #059669; 
+    }
+    .error { 
+      color: #dc2626; 
+      background: #fef2f2; 
+      padding: 12px; 
+      border-radius: 8px; 
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <h1>🛒 Product Search</h1>
+    <p style="text-align: center; color: #6b7280;">Type to search products live (debounced)</p>
+    
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Search products (e.g., laptop, shirt, phone)...">
+    </div>
+    
+    <div id="loading" class="loading">🔄 Searching...</div>
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="results" class="results"></div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const resultsDiv = document.getElementById('results');
+    const loadingDiv = document.getElementById('loading');
+    const errorDiv = document.getElementById('error');
+
+    // Simulated products database (like products.json)
+    const products = [
+      { name: "Wireless Headphones", price: 149.99, category: "Electronics" },
+      { name: "Cotton T-Shirt", price: 19.99, category: "Clothing" },
+      { name: "Gaming Laptop", price: 1299.99, category: "Electronics" },
+      { name: "Running Shoes", price: 89.99, category: "Footwear" },
+      { name: "Coffee Maker", price: 79.99, category: "Home Appliances" },
+      { name: "Smartphone Pro", price: 999.99, category: "Electronics" },
+      { name: "Denim Jeans", price: 49.99, category: "Clothing" },
+      { name: "Mechanical Keyboard", price: 159.99, category: "Electronics" },
+      { name: "Yoga Mat", price: 29.99, category: "Fitness" },
+      { name: "Bluetooth Speaker", price: 59.99, category: "Electronics" },
+      { name: "Leather Wallet", price: 39.99, category: "Accessories" },
+      { name: "Air Fryer", price: 129.99, category: "Home Appliances" }
+    ];
+
+    // Debounce function
+    function debounce(func, delay) {
+      let timeoutId;
+      return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+      };
+    }
+
+    // Simulate AJAX fetch from JSON (async with delay)
+    async function fetchProducts(query) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          const matches = products.filter(product =>
+            product.name.toLowerCase().includes(query.toLowerCase()) ||
+            product.category.toLowerCase().includes(query.toLowerCase())
+          );
+          resolve(matches);
+        }, 600); // Simulate network delay
+      });
+    }
+
+    // Display results
+    function displayResults(products) {
+      if (products.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results">No results found 😔</div>';
+        return;
+      }
+
+      const grid = document.createElement('div');
+      grid.className = 'product-grid';
+      
+      products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <div class="product-name">${product.name}</div>
+          <div class="product-category">${product.category}</div>
+          <div class="product-price">$${product.price.toFixed(2)}</div>
+        `;
+        grid.appendChild(card);
+      });
+      
+      resultsDiv.innerHTML = '';
+      resultsDiv.appendChild(grid);
+    }
+
+    // Error handler
+    function showError(message) {
+      errorDiv.textContent = `Error: ${message}`;
+      errorDiv.style.display = 'block';
+      resultsDiv.innerHTML = '';
+    }
+
+    // Debounced search handler
+    const debouncedSearch = debounce(async (query) => {
+      if (query.length < 2) {
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      loadingDiv.style.display = 'block';
+      errorDiv.style.display = 'none';
+
+      try {
+        const results = await fetchProducts(query);
+        displayResults(results);
+      } catch (error) {
+        showError('Failed to fetch products. Please try again.');
+        console.error('Search error:', error);
+      } finally {
+        loadingDiv.style.display = 'none';
+      }
+    }, 400);
+
+    // Event listener
+    searchInput.addEventListener('input', (e) => {
+      debouncedSearch(e.target.value.trim());
+    });
+  </script>
+</body>
+</html>
