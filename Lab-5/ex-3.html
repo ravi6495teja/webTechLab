@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Record System - Fetch API JSON CRUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif; 
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      min-height: 100vh; padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: white; margin-bottom: 30px; font-size: 2.8em; }
+    
+    .form-section { 
+      background: white; 
+      padding: 30px; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+    }
+    .form-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px; 
+      margin-bottom: 25px; 
+    }
+    input, select { 
+      padding: 14px; 
+      border: 2px solid #e1f5fe; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      transition: all 0.3s;
+      width: 100%;
+    }
+    input:focus, select:focus { outline: none; border-color: #4facfe; box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1); }
+    
+    .btn { 
+      padding: 14px 28px; 
+      border: none; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+      margin-right: 12px; margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .btn-primary { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+    .btn-success { background: linear-gradient(135deg, #43e97b, #38f9d7); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #fa709a, #fee140); color: white; }
+    .btn-warning { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .message { 
+      padding: 15px 25px; 
+      border-radius: 12px; 
+      margin-bottom: 25px; 
+      font-weight: 600;
+      display: none; animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .success { background: #e8f5e8; color: #2e7d32; border: 2px solid #c8e6c9; }
+    .error { background: #ffebee; color: #c62828; border: 2px solid #ffcdd2; }
+    
+    .table-container { 
+      background: white; 
+      border-radius: 20px; 
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1); 
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th { 
+      background: linear-gradient(135deg, #4facfe, #00f2fe); 
+      color: white; 
+      padding: 20px; 
+      text-align: left; 
+      font-weight: 600;
+    }
+    td { padding: 18px 20px; border-bottom: 1px solid #f8f9fa; }
+    tr:nth-child(even) { background: #f0f8ff; }
+    tr:hover { background: #e3f2fd !important; }
+    
+    .grade-a { background: #e8f5e8; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .grade-b { background: #fff3e0; color: #ef6c00; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .grade-c { background: #fff8e1; color: #f57f17; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .grade-f { background: #ffebee; color: #c62828; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    
+    .loading { 
+      text-align: center; 
+      padding: 60px 40px; 
+      color: #0288d1; 
+      font-size: 1.2em;
+      display: flex; align-items: center; justify-content: center; gap: 15px;
+    }
+    .spinner { 
+      width: 30px; height: 30px; 
+      border: 3px solid #e3f2fd; 
+      border-top: 3px solid #4facfe; 
+      border-radius: 50%; 
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .json-error { 
+      color: #d32f2f; 
+      font-weight: bold; 
+      background: #ffebee; 
+      padding: 25px; 
+      border-radius: 12px; 
+      border-left: 5px solid #f44336; 
+      text-align: center;
+    }
+    
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .btn { width: 100%; margin-bottom: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 Student Record System</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <!-- Student Form -->
+    <div class="form-section">
+      <h3 style="margin-bottom: 25px; color: #333; font-size: 1.5em;">➕ Add/Update Student</h3>
+      <form id="studentForm">
+        <input type="hidden" id="editStudentId" value="">
+        <div class="form-grid">
+          <div>
+            <input type="text" id="studentId" placeholder="Student ID (e.g., S001)" required maxlength="10">
+          </div>
+          <div>
+            <input type="text" id="studentName" placeholder="Full Name" required>
+          </div>
+          <div>
+            <select id="studentCourse" required>
+              <option value="">Select Course</option>
+              <option value="Computer Science">💻 Computer Science</option>
+              <option value="Electronics">⚡ Electronics</option>
+              <option value="Mechanical">🔧 Mechanical</option>
+              <option value="Civil">🏗️ Civil</option>
+            </select>
+          </div>
+          <div>
+            <input type="number" id="studentMarks" placeholder="Marks (0-100)" min="0" max="100" required>
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save Student</button>
+          <button type="button" class="btn btn-danger" id="clearBtn">🗑️ Clear Form</button>
+          <button type="button" class="btn btn-success" id="loadBtn">🔄 Load from JSON</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Students Table -->
+    <div class="table-container">
+      <div id="tableContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading students from JSON file...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let editingStudentId = null;
+    let students = [];
+
+    // DOM Elements
+    const form = document.getElementById('studentForm');
+    const messageDiv = document.getElementById('message');
+    const tableContent = document.getElementById('tableContent');
+
+    // Utility Functions
+    function showMessage(text, type = 'success') {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+      setTimeout(() => messageDiv.style.display = 'none', 4000);
+    }
+
+    function getGrade(marks) {
+      if (marks >= 90) return { letter: 'A+', class: 'grade-a' };
+      if (marks >= 80) return { letter: 'A', class: 'grade-a' };
+      if (marks >= 70) return { letter: 'B', class: 'grade-b' };
+      if (marks >= 60) return { letter: 'C', class: 'grade-c' };
+      return { letter: 'F', class: 'grade-f' };
+    }
+
+    // Fetch JSON via Fetch API
+    async function loadStudentsFromJSON() {
+      tableContent.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          Fetching JSON data...
+        </div>
+      `;
+      
+      try {
+        const response = await fetch('students.json');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: students.json not found`);
+        }
+        
+        const jsonData = await response.json();
+        
+        if (!Array.isArray(jsonData) || jsonData.length === 0) {
+          throw new Error('Invalid JSON: Expected array of students');
+        }
+        
+        students = jsonData;
+        displayStudentsTable();
+        showMessage(`✅ Loaded ${students.length} students from JSON`, 'success');
+        
+      } catch (error) {
+        console.error('JSON Load Error:', error);
+        tableContent.innerHTML = `
+          <div class="json-error">
+            ❌ Failed to load students.json<br>
+            <small>Error: ${error.message}</small><br><br>
+            <strong>Create students.json file or check file format!</strong>
+          </div>
+        `;
+        showMessage(`JSON Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Display students table
+    function displayStudentsTable() {
+      if (students.length === 0) {
+        tableContent.innerHTML = '<div class="loading">📭 No students found. Add your first student!</div>';
+        return;
+      }
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Marks</th>
+              <th>Grade</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      students.forEach(student => {
+        const grade = getGrade(student.marks);
+        html += `
+          <tr>
+            <td><strong>${student.id}</strong></td>
+            <td>${student.name}</td>
+            <td>${student.course}</td>
+            <td><strong>${student.marks}/100</strong></td>
+            <td><span class="${grade.class}">${grade.letter}</span></td>
+            <td>
+              <button class="btn btn-warning" onclick="editStudent('${student.id}')">✏️ Edit</button>
+              <button class="btn btn-danger" onclick="deleteStudent('${student.id}')">🗑️ Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      tableContent.innerHTML = html;
+    }
+
+    // Input validation
+    function validateStudentData(studentData) {
+      if (!studentData.id || studentData.id.length < 2) {
+        return 'Student ID must be at least 2 characters (e.g., S001)';
+      }
+      if (!studentData.name || studentData.name.length < 2) {
+        return 'Name must be at least 2 characters';
+      }
+      if (!studentData.course) {
+        return 'Please select a course';
+      }
+      if (!studentData.marks || studentData.marks < 0 || studentData.marks > 100) {
+        return 'Marks must be between 0 and 100';
+      }
+      
+      // Check for duplicate ID (except when editing the same student)
+      if (students.find(s => s.id === studentData.id && studentData.id !== editingStudentId)) {
+        return 'Student ID already exists!';
+      }
+      
+      return null;
+    }
+
+    // Form handlers
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const studentData = {
+        id: document.getElementById('studentId').value.trim(),
+        name: document.getElementById('studentName').value.trim(),
+        course: document.getElementById('studentCourse').value,
+        marks: parseInt(document.getElementById('studentMarks').value)
+      };
+
+      const validationError = validateStudentData(studentData);
+      if (validationError) {
+        showMessage(`❌ ${validationError}`, 'error');
+        return;
+      }
+
+      if (editingStudentId) {
+        updateStudent(studentData);
+      } else {
+        createStudent(studentData);
+      }
+    });
+
+    function createStudent(studentData) {
+      // Simulate server POST by adding to local array
+      students.unshift(studentData);
+      
+      // Reset form
+      form.reset();
+      document.getElementById('editStudentId').value = '';
+      editingStudentId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Student';
+      
+      displayStudentsTable();
+      showMessage('✅ New student added successfully!', 'success');
+    }
+
+    function updateStudent(studentData) {
+      const index = students.findIndex(s => s.id === editingStudentId);
+      if (index !== -1) {
+        students[index] = studentData;
+        editingStudentId = null;
+        form.reset();
+        document.getElementById('saveBtn').textContent = '💾 Save Student';
+        displayStudentsTable();
+        showMessage('✅ Student record updated!', 'success');
+      }
+    }
+
+    function editStudent(id) {
+      const student = students.find(s => s.id === id);
+      if (student) {
+        document.getElementById('studentId').value = student.id;
+        document.getElementById('studentName').value = student.name;
+        document.getElementById('studentCourse').value = student.course;
+        document.getElementById('studentMarks').value = student.marks;
+        document.getElementById('editStudentId').value = id;
+        editingStudentId = id;
+        document.getElementById('saveBtn').textContent = '🔄 Update Student';
+        document.getElementById('studentName').focus();
+      }
+    }
+
+    function deleteStudent(id) {
+      if (confirm('Delete this student record permanently?')) {
+        students = students.filter(s => s.id !== id);
+        
+        // Reset form if editing deleted student
+        if (editingStudentId === id) {
+          form.reset();
+          editingStudentId = null;
+          document.getElementById('saveBtn').textContent = '💾 Save Student';
+        }
+        
+        displayStudentsTable();
+        showMessage('🗑️ Student record deleted!', 'success');
+      }
+    }
+
+    // Event listeners for buttons
+    document.getElementById('clearBtn').onclick = function() {
+      form.reset();
+      document.getElementById('editStudentId').value = '';
+      editingStudentId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Student';
+    };
+
+    document.getElementById('loadBtn').onclick = loadStudentsFromJSON;
+
+    // Initial load
+    window.onload = function() {
+      loadStudentsFromJSON();
+    };
+  </script>
+</body>
+</html>

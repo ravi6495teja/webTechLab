@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Management - AJAX XML CRUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh; padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { text-align: center; color: white; margin-bottom: 30px; font-size: 2.5em; }
+    
+    .form-section { 
+      background: white; 
+      padding: 30px; 
+      border-radius: 15px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+    }
+    .form-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px; 
+      margin-bottom: 20px; 
+    }
+    input { 
+      padding: 12px; 
+      border: 2px solid #e2e8f0; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      transition: border-color 0.3s; 
+    }
+    input:focus { outline: none; border-color: #667eea; }
+    .btn { 
+      padding: 12px 24px; 
+      border: none; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+      margin-right: 10px;
+    }
+    .btn-primary { background: #667eea; color: white; }
+    .btn-success { background: #48bb78; color: white; }
+    .btn-danger { background: #f56565; color: white; }
+    .btn:hover { transform: translateY(-2px); }
+    
+    .message { 
+      padding: 12px 20px; 
+      border-radius: 8px; 
+      margin-bottom: 20px; 
+      font-weight: 500;
+      display: none;
+    }
+    .success { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; }
+    .error { background: #fed7d7; color: #742a2a; border: 1px solid #fc8181; }
+    
+    .table-container { 
+      background: white; 
+      border-radius: 15px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 15px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    th { background: #f7fafc; font-weight: 600; color: #4a5568; }
+    tr:hover { background: #f7fafc; }
+    .loading, .empty { text-align: center; padding: 40px; color: #718096; }
+    .xml-error { color: #e53e3e; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>👥 Employee Management System</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <!-- Employee Form -->
+    <div class="form-section">
+      <h3 style="margin-bottom: 20px; color: #333;">➕ Add/Edit Employee</h3>
+      <form id="employeeForm">
+        <input type="hidden" id="editId" value="">
+        <div class="form-grid">
+          <div>
+            <input type="text" id="empId" placeholder="Employee ID" required>
+          </div>
+          <div>
+            <input type="text" id="empName" placeholder="Name" required>
+          </div>
+          <div>
+            <input type="text" id="empDept" placeholder="Department" required>
+          </div>
+          <div>
+            <input type="number" id="empSalary" placeholder="Salary" min="0" required>
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save Employee</button>
+          <button type="button" class="btn btn-danger" id="clearBtn">🗑️ Clear</button>
+          <button type="button" class="btn btn-success" id="loadBtn">🔄 Load from XML</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Employees Table -->
+    <div class="table-container">
+      <div id="tableContent">
+        <div class="loading">📂 Loading employees from XML...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let editingId = null;
+    let employees = [];
+
+    const form = document.getElementById('employeeForm');
+    const messageDiv = document.getElementById('message');
+    const tableContent = document.getElementById('tableContent');
+    
+    // Utility functions
+    function showMessage(text, type = 'success') {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 4000);
+    }
+
+    function hideMessage() {
+      document.getElementById('message').style.display = 'none';
+    }
+
+    // XML AJAX Operations
+    function loadEmployees() {
+      const xhr = new XMLHttpRequest();
+      
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200 && xhr.responseXML) {
+            parseAndDisplayXML(xhr.responseXML);
+          } else if (xhr.status === 404) {
+            tableContent.innerHTML = '<div class="empty xml-error">❌ employees.xml not found!</div>';
+            showMessage('Create employees.xml file first!', 'error');
+          } else if (!xhr.responseXML) {
+            tableContent.innerHTML = '<div class="empty xml-error">❌ Malformed XML or empty file!</div>';
+            showMessage('XML parsing failed - check file format', 'error');
+          } else {
+            tableContent.innerHTML = '<div class="empty xml-error">❌ Load failed: ' + xhr.status + '</div>';
+            showMessage('HTTP Error: ' + xhr.status, 'error');
+          }
+        }
+      };
+      
+      xhr.onerror = function() {
+        tableContent.innerHTML = '<div class="empty xml-error">❌ Network error loading XML</div>';
+        showMessage('Failed to load XML file', 'error');
+      };
+      
+      xhr.open('GET', 'employees.xml', true);
+      xhr.overrideMimeType('text/xml');
+      xhr.send();
+    }
+
+    // Parse XML using responseXML + getElementsByTagName
+    function parseAndDisplayXML(xmlDoc) {
+      try {
+        const employeesNodes = xmlDoc.getElementsByTagName('employee');
+        employees = [];
+        
+        for (let i = 0; i < employeesNodes.length; i++) {
+          const emp = employeesNodes[i];
+          employees.push({
+            id: emp.getElementsByTagName('id')[0]?.textContent || '',
+            name: emp.getElementsByTagName('name')[0]?.textContent || '',
+            dept: emp.getElementsByTagName('department')[0]?.textContent || '',
+            salary: emp.getElementsByTagName('salary')[0]?.textContent || '0'
+          });
+        }
+        
+        displayEmployeesTable();
+        showMessage(`✅ Loaded ${employees.length} employees from XML`, 'success');
+      } catch (error) {
+        tableContent.innerHTML = '<div class="empty xml-error">❌ XML parsing error: ' + error.message + '</div>';
+        showMessage('XML structure invalid', 'error');
+      }
+    }
+
+    function displayEmployeesTable() {
+      if (employees.length === 0) {
+        tableContent.innerHTML = '<div class="empty">📭 No employees found in XML</div>';
+        return;
+      }
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Salary</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      employees.forEach(emp => {
+        html += `
+          <tr>
+            <td>${emp.id}</td>
+            <td>${emp.name}</td>
+            <td>${emp.dept}</td>
+            <td>₹${parseFloat(emp.salary).toLocaleString()}</td>
+            <td>
+              <button class="btn btn-primary" onclick="editEmployee('${emp.id}')">✏️ Edit</button>
+              <button class="btn btn-danger" onclick="deleteEmployee('${emp.id}')">🗑️ Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      tableContent.innerHTML = html;
+    }
+
+    // Form handlers
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const empData = {
+        id: document.getElementById('empId').value.trim(),
+        name: document.getElementById('empName').value.trim(),
+        dept: document.getElementById('empDept').value.trim(),
+        salary: document.getElementById('empSalary').value
+      };
+
+      if (editingId) {
+        updateEmployee(empData);
+      } else {
+        createEmployee(empData);
+      }
+    });
+
+    function createEmployee(empData) {
+      // Simulate server-side XML update (in real app, POST to server)
+      const newEmp = { ...empData, id: 'EMP' + Date.now() };
+      employees.unshift(newEmp);
+      
+      // Update form
+      document.getElementById('editId').value = '';
+      form.reset();
+      editingId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Employee';
+      
+      displayEmployeesTable();
+      showMessage('✅ New employee added!', 'success');
+    }
+
+    function updateEmployee(empData) {
+      const index = employees.findIndex(emp => emp.id === editingId);
+      if (index !== -1) {
+        employees[index] = empData;
+        editingId = null;
+        form.reset();
+        document.getElementById('saveBtn').textContent = '💾 Save Employee';
+        displayEmployeesTable();
+        showMessage('✅ Employee updated!', 'success');
+      }
+    }
+
+    function editEmployee(id) {
+      const emp = employees.find(e => e.id === id);
+      if (emp) {
+        document.getElementById('empId').value = emp.id;
+        document.getElementById('empName').value = emp.name;
+        document.getElementById('empDept').value = emp.dept;
+        document.getElementById('empSalary').value = emp.salary;
+        document.getElementById('editId').value = id;
+        editingId = id;
+        document.getElementById('saveBtn').textContent = '🔄 Update Employee';
+        document.getElementById('empName').focus();
+      }
+    }
+
+    function deleteEmployee(id) {
+      if (confirm('Delete this employee?')) {
+        employees = employees.filter(emp => emp.id !== id);
+        displayEmployeesTable();
+        showMessage('🗑️ Employee deleted!', 'success');
+      }
+    }
+
+    document.getElementById('clearBtn').onclick = function() {
+      form.reset();
+      document.getElementById('editId').value = '';
+      editingId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Employee';
+    };
+
+    document.getElementById('loadBtn').onclick = loadEmployees;
+
+    // Initial load
+    window.onload = loadEmployees;
+  </script>
+</body>
+</html>

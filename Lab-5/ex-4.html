@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Inventory System - JSON CRUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, sans-serif; 
+      background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+      min-height: 100vh; padding: 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 30px; font-size: 2.8em; }
+    
+    .stats-bar { 
+      background: white; 
+      padding: 25px; 
+      border-radius: 20px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px;
+      text-align: center;
+    }
+    .stat-card { padding: 20px; border-radius: 15px; }
+    .stat-value { font-size: 2.5em; font-weight: 700; }
+    .total-value { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .low-stock { background: linear-gradient(135deg, #ff6b6b, #ee5a52); color: white; }
+    .total-products { background: linear-gradient(135deg, #48bb78, #38a169); color: white; }
+    
+    .controls { 
+      background: white; 
+      padding: 25px; 
+      border-radius: 20px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+      display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+    }
+    .search-box { flex: 1; min-width: 300px; position: relative; }
+    input, select { 
+      padding: 14px 18px; 
+      border: 2px solid #e8f4f8; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      transition: all 0.3s;
+      width: 100%;
+    }
+    input:focus, select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+    
+    .btn { 
+      padding: 14px 28px; 
+      border: none; 
+      border-radius: 12px; 
+      font-size: 16px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+      font-weight: 600; white-space: nowrap;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-success { background: linear-gradient(135deg, #48bb78, #38a169); color: white; }
+    .btn-danger { background: linear-gradient(135deg, #f56565, #e53e3e); color: white; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    
+    .form-section { 
+      background: white; 
+      padding: 30px; 
+      border-radius: 20px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      margin-bottom: 30px;
+    }
+    .form-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 20px; 
+      margin-bottom: 25px; 
+    }
+    
+    .message { 
+      padding: 15px 25px; 
+      border-radius: 12px; 
+      margin-bottom: 25px; 
+      font-weight: 600;
+      display: none; animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .success { background: #c6f6d5; color: #22543d; border: 2px solid #9ae6b4; }
+    .error { background: #fed7d7; color: #742a2a; border: 2px solid #fc8181; }
+    
+    .table-container { 
+      background: white; 
+      border-radius: 20px; 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.1); 
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th { 
+      background: linear-gradient(135deg, #667eea, #764ba2); 
+      color: white; 
+      padding: 20px; 
+      text-align: left; 
+      font-weight: 600;
+    }
+    td { padding: 18px 20px; border-bottom: 1px solid #f8f9fa; }
+    tr:nth-child(even) { background: #f8fafc; }
+    tr:hover { background: #edf2f7 !important; }
+    
+    .stock-low { background: #fed7d7 !important; color: #742a2a; font-weight: 600; }
+    .stock-ok { background: #c6f6d5; color: #22543d; padding: 4px 12px; border-radius: 20px; font-size: 14px; }
+    .stock-out { background: #fee2e2; color: #dc2626; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 700; }
+    .price { font-weight: 600; color: #2d3748; }
+    
+    .loading { 
+      text-align: center; 
+      padding: 60px 40px; 
+      color: #4a5568; 
+      font-size: 1.2em;
+    }
+    .spinner { 
+      width: 40px; height: 40px; 
+      border: 4px solid #e2e8f0; 
+      border-top: 4px solid #667eea; 
+      border-radius: 50%; 
+      animation: spin 1s linear infinite; margin: 0 auto 20px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    @media (max-width: 768px) {
+      .form-grid, .stats-bar { grid-template-columns: 1fr; }
+      .controls { flex-direction: column; }
+      .search-box { min-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📦 Product Inventory System</h1>
+    
+    <div id="message" class="message"></div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card total-products">
+        <div class="stat-value" id="totalProducts">0</div>
+        <div>Total Products</div>
+      </div>
+      <div class="stat-card low-stock">
+        <div class="stat-value" id="lowStock">0</div>
+        <div>Low Stock Items</div>
+      </div>
+      <div class="stat-card total-value">
+        <div class="stat-value" id="totalValue">$0</div>
+        <div>Inventory Value</div>
+      </div>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Search by category (Electronics, Clothing, etc.)">
+      </div>
+      <button class="btn btn-success" id="loadBtn">🔄 Load JSON</button>
+      <button class="btn btn-primary" id="clearSearchBtn">Clear Search</button>
+    </div>
+    
+    <!-- Product Form -->
+    <div class="form-section">
+      <h3 style="margin-bottom: 25px; color: #333; font-size: 1.5em;">➕ Add/Edit Product</h3>
+      <form id="productForm">
+        <input type="hidden" id="editProductId" value="">
+        <div class="form-grid">
+          <div><input type="text" id="productId" placeholder="Product ID (e.g., P001)" required maxlength="10"></div>
+          <div><input type="text" id="productName" placeholder="Product Name" required></div>
+          <div>
+            <select id="productCategory" required>
+              <option value="">Select Category</option>
+              <option value="Electronics">📱 Electronics</option>
+              <option value="Clothing">👕 Clothing</option>
+              <option value="Home">🏠 Home</option>
+              <option value="Books">📚 Books</option>
+            </select>
+          </div>
+          <div><input type="number" id="productPrice" placeholder="Price ($)" min="0" step="0.01" required></div>
+          <div><input type="number" id="productStock" placeholder="Stock Quantity" min="0" required></div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save Product</button>
+          <button type="button" class="btn btn-danger" id="clearBtn">🗑️ Clear Form</button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Products Table -->
+    <div class="table-container">
+      <div id="tableContent">
+        <div class="loading">
+          <div class="spinner"></div>
+          Loading inventory from JSON...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let editingProductId = null;
+    let products = [];
+    let filteredProducts = [];
+
+    // DOM Elements
+    const form = document.getElementById('productForm');
+    const messageDiv = document.getElementById('message');
+    const tableContent = document.getElementById('tableContent');
+    const searchInput = document.getElementById('searchInput');
+
+    // Utility Functions
+    function showMessage(text, type = 'success') {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+      setTimeout(() => messageDiv.style.display = 'none', 4000);
+    }
+
+    function updateStats() {
+      const totalProductsEl = document.getElementById('totalProducts');
+      const lowStockEl = document.getElementById('lowStock');
+      const totalValueEl = document.getElementById('totalValue');
+      
+      const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
+      
+      totalProductsEl.textContent = displayProducts.length;
+      const lowStockCount = displayProducts.filter(p => p.stock <= 10).length;
+      lowStockEl.textContent = lowStockCount;
+      
+      const totalValue = displayProducts.reduce((sum, p) => sum + (p.price * p.stock), 0);
+      totalValueEl.textContent = `$${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+    }
+
+    function getStockStatus(stock) {
+      if (stock === 0) return { text: 'Out of Stock', class: 'stock-out' };
+      if (stock <= 10) return { text: 'Low Stock', class: 'stock-low' };
+      return { text: 'In Stock', class: 'stock-ok' };
+    }
+
+    // Load JSON via Fetch API
+    async function loadProductsFromJSON() {
+      tableContent.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+          Fetching inventory data...
+        </div>
+      `;
+      
+      try {
+        const response = await fetch('inventory.json');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: inventory.json not found`);
+        }
+        
+        const jsonData = await response.json();
+        
+        if (!Array.isArray(jsonData)) {
+          throw new Error('Invalid JSON: Expected array of products');
+        }
+        
+        products = jsonData;
+        filteredProducts = [];
+        displayProductsTable();
+        updateStats();
+        showMessage(`✅ Loaded ${products.length} products from JSON`, 'success');
+        
+      } catch (error) {
+        console.error('JSON Load Error:', error);
+        tableContent.innerHTML = `
+          <div style="text-align: center; padding: 60px 40px; color: #e53e3e;">
+            ❌ Failed to load inventory.json<br>
+            <small>Error: ${error.message}</small><br><br>
+            <strong>Create inventory.json file first!</strong>
+          </div>
+        `;
+        showMessage(`JSON Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Filter products by category search
+    function filterProducts() {
+      const query = searchInput.value.toLowerCase().trim();
+      
+      if (!query) {
+        filteredProducts = [];
+        displayProductsTable();
+        updateStats();
+        return;
+      }
+      
+      filteredProducts = products.filter(product => 
+        product.category.toLowerCase().includes(query)
+      );
+      
+      displayProductsTable();
+      updateStats();
+      showMessage(`Found ${filteredProducts.length} products in "${query}"`, 'success');
+    }
+
+    // Display products table
+    function displayProductsTable() {
+      const displayProducts = filteredProducts.length > 0 ? filteredProducts : products;
+      
+      if (displayProducts.length === 0) {
+        tableContent.innerHTML = '<div class="loading" style="color: #a0aec0;">📭 No products found matching your search</div>';
+        return;
+      }
+
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      displayProducts.forEach(product => {
+        const stockStatus = getStockStatus(product.stock);
+        html += `
+          <tr ${product.stock <= 10 ? 'class="stock-low"' : ''}>
+            <td><strong>${product.id}</strong></td>
+            <td>${product.name}</td>
+            <td>${product.category}</td>
+            <td><span class="price">$${product.price.toFixed(2)}</span></td>
+            <td><strong>${product.stock}</strong></td>
+            <td><span class="${stockStatus.class}">${stockStatus.text}</span></td>
+            <td>
+              <button class="btn btn-primary" onclick="editProduct('${product.id}')" style="padding: 8px 16px; font-size: 14px;">✏️ Edit</button>
+              <button class="btn btn-danger" onclick="deleteProduct('${product.id}')" style="padding: 8px 16px; font-size: 14px;">🗑️ Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      tableContent.innerHTML = html;
+    }
+
+    // Validation
+    function validateProductData(productData) {
+      if (!productData.id || productData.id.length < 2) return 'Product ID must be at least 2 chars';
+      if (!productData.name || productData.name.length < 2) return 'Product name required';
+      if (!productData.category) return 'Please select category';
+      if (productData.price <= 0) return 'Price must be greater than 0';
+      if (productData.stock < 0) return 'Stock cannot be negative';
+      
+      if (products.find(p => p.id === productData.id && productData.id !== editingProductId)) {
+        return 'Product ID already exists';
+      }
+      
+      return null;
+    }
+
+    // Form handlers
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const productData = {
+        id: document.getElementById('productId').value.trim(),
+        name: document.getElementById('productName').value.trim(),
+        category: document.getElementById('productCategory').value,
+        price: parseFloat(document.getElementById('productPrice').value),
+        stock: parseInt(document.getElementById('productStock').value)
+      };
+
+      const validationError = validateProductData(productData);
+      if (validationError) {
+        showMessage(`❌ ${validationError}`, 'error');
+        return;
+      }
+
+      if (editingProductId) {
+        updateProduct(productData);
+      } else {
+        createProduct(productData);
+      }
+    });
+
+    function createProduct(productData) {
+      products.unshift(productData);
+      form.reset();
+      editingProductId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Product';
+      displayProductsTable();
+      updateStats();
+      showMessage('✅ New product added to inventory!', 'success');
+    }
+
+    function updateProduct(productData) {
+      const index = products.findIndex(p => p.id === editingProductId);
+      if (index !== -1) {
+        products[index] = productData;
+        editingProductId = null;
+        form.reset();
+        document.getElementById('saveBtn').textContent = '💾 Save Product';
+        displayProductsTable();
+        updateStats();
+        showMessage('✅ Product updated successfully!', 'success');
+      }
+    }
+
+    function editProduct(id) {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        document.getElementById('productId').value = product.id;
+        document.getElementById('productName').value = product.name;
+        document.getElementById('productCategory').value = product.category;
+        document.getElementById('productPrice').value = product.price;
+        document.getElementById('productStock').value = product.stock;
+        document.getElementById('editProductId').value = id;
+        editingProductId = id;
+        document.getElementById('saveBtn').textContent = '🔄 Update Product';
+      }
+    }
+
+    function deleteProduct(id) {
+      if (confirm('Delete this product from inventory?')) {
+        products = products.filter(p => p.id !== id);
+        if (editingProductId === id) {
+          form.reset();
+          editingProductId = null;
+          document.getElementById('saveBtn').textContent = '💾 Save Product';
+        }
+        displayProductsTable();
+        updateStats();
+        showMessage('🗑️ Product removed from inventory!', 'success');
+      }
+    }
+
+    // Event Listeners
+    document.getElementById('clearBtn').onclick = function() {
+      form.reset();
+      document.getElementById('editProductId').value = '';
+      editingProductId = null;
+      document.getElementById('saveBtn').textContent = '💾 Save Product';
+    };
+
+    document.getElementById('loadBtn').onclick = loadProductsFromJSON;
+    document.getElementById('clearSearchBtn').onclick = function() {
+      searchInput.value = '';
+      filteredProducts = [];
+      displayProductsTable();
+      updateStats();
+    };
+
+    searchInput.addEventListener('input', filterProducts);
+
+    // Initial load
+    window.onload = loadProductsFromJSON;
+  </script>
+</body>
+</html>
