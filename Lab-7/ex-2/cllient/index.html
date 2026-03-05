@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Book Finder</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-book"></i> Online Book Finder</h1>
+            <p class="subtitle">Discover your next favorite book</p>
+        </header>
+
+        <!-- Search and Filter Section -->
+        <div class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search by title or author..."
+                >
+            </div>
+
+            <div class="filters">
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                </select>
+
+                <select id="sortBy">
+                    <option value="title">Sort by Title</option>
+                    <option value="price">Sort by Price</option>
+                    <option value="rating">Sort by Rating</option>
+                    <option value="year">Sort by Year</option>
+                </select>
+
+                <select id="sortOrder">
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+
+                <div class="price-filter">
+                    <input type="number" id="minPrice" placeholder="Min Price" min="0">
+                    <input type="number" id="maxPrice" placeholder="Max Price" min="0">
+                </div>
+
+                <select id="minRating">
+                    <option value="">Any Rating</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="4.5">4.5+ Stars</option>
+                    <option value="4.8">4.8+ Stars</option>
+                </select>
+
+                <button id="applyFilters" class="btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <button id="resetFilters" class="btn-secondary">
+                    <i class="fas fa-redo"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Access Section -->
+        <div class="quick-access">
+            <button id="topRatedBtn" class="btn-quick">
+                <i class="fas fa-star"></i> Top Rated Books
+            </button>
+            <button id="programmingBtn" class="btn-quick">
+                <i class="fas fa-code"></i> Programming
+            </button>
+            <button id="fictionBtn" class="btn-quick">
+                <i class="fas fa-robot"></i> Fiction
+            </button>
+            <button id="scienceBtn" class="btn-quick">
+                <i class="fas fa-flask"></i> Science
+            </button>
+        </div>
+
+        <!-- Books Grid -->
+        <div id="booksContainer" class="books-grid">
+            <div class="loading">Loading books...</div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <button id="prevPage" class="btn-pagination" disabled>
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span id="pageInfo">Page 1</span>
+            <button id="nextPage" class="btn-pagination">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div id="stats" class="stats">
+                Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> books
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Details Modal -->
+    <div id="bookModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="bookDetails" class="book-details">
+                <!-- Book details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
