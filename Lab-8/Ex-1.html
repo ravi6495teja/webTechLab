@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Marks Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #4299e1;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #calculateBtn {
+            background-color: #4299e1;
+            color: white;
+        }
+        #calculateBtn:hover {
+            background-color: #3182ce;
+        }
+        #clearBtn {
+            background-color: #f56565;
+            color: white;
+        }
+        #clearBtn:hover {
+            background-color: #e53e3e;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e6fffa;
+            border-radius: 5px;
+            display: none;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        .result-value {
+            color: #22543d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Marks Calculator</h1>
+        <form id="marksForm">
+            <label for="studentName">Student Name:</label>
+            <input type="text" id="studentName" placeholder="Enter student name">
+
+            <label for="mark1">Mark 1:</label>
+            <input type="number" id="mark1" min="0" max="100" step="0.01">
+
+            <label for="mark2">Mark 2:</label>
+            <input type="number" id="mark2" min="0" max="100" step="0.01">
+
+            <label for="mark3">Mark 3:</label>
+            <input type="number" id="mark3" min="0" max="100" step="0.01">
+
+            <div class="button-group">
+                <button type="button" id="calculateBtn" onclick="calculateMarks()">Calculate</button>
+                <button type="reset" id="clearBtn" onclick="clearResults()">Clear Data</button>
+            </div>
+        </form>
+        <div id="results" class="results">
+            <div class="result-item">
+                <span class="result-label">Student Name:</span>
+                <span id="displayName" class="result-value"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Total Marks:</span>
+                <span id="displayTotal" class="result-value"></span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Average Marks:</span>
+                <span id="displayAverage" class="result-value"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const calculateAverage = (m1, m2, m3) => {
+            return (m1 + m2 + m3) / 3;
+        };
+
+        function calculateMarks() {
+            const studentName = document.getElementById('studentName').value || 'Unknown';
+            const mark1 = parseFloat(document.getElementById('mark1').value) || 0;
+            const mark2 = parseFloat(document.getElementById('mark2').value) || 0;
+            const mark3 = parseFloat(document.getElementById('mark3').value) || 0;
+
+            let total = mark1 + mark2 + mark3;
+            let average = calculateAverage(mark1, mark2, mark3);
+
+            document.getElementById('displayName').textContent = studentName;
+            document.getElementById('displayTotal').textContent = total.toFixed(2);
+            document.getElementById('displayAverage').textContent = average.toFixed(2);
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function clearResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

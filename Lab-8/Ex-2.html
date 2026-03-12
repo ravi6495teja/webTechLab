@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Object Demo</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c5282;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            background: #e6f3ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4299e1;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+        .code-output {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #3182ce;
+        }
+        .buttons {
+            text-align: center;
+            margin: 25px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Object Destructuring & Spread Demo</h1>
+        
+        <div class="demo-section">
+            <div class="section-title">1. Original Student Object</div>
+            <div id="originalData"></div>
+        </div>
+
+        <div class="demo-section">
+            <div class="section-title">2. Object Destructuring</div>
+            <div id="destructuredData"></div>
+        </div>
+
+        <div class="demo-section">
+            <div class="section-title">3. Updated Student with Grade (Spread Operator)</div>
+            <div id="updatedData"></div>
+        </div>
+
+        <div class="buttons">
+            <button onclick="runDemo()">Run Demo</button>
+            <button onclick="clearOutput()">Clear</button>
+        </div>
+    </div>
+
+    <script>
+        const student = {
+            id: 101,
+            name: "Priya",
+            department: "CSE",
+            marks: 92
+        };
+
+        const getGrade = (marks) => {
+            if (marks >= 90) return "A";
+            if (marks >= 80) return "B";
+            if (marks >= 70) return "C";
+            return "D";
+        };
+
+        function runDemo() {
+            // 1. Display original object
+            document.getElementById('originalData').innerHTML = 
+                `<span class="code-output">{ id: ${student.id}, name: '${student.name}', department: '${student.department}', marks: ${student.marks} }</span>`;
+
+            // 2. Object destructuring
+            const { id, name, department, marks } = student;
+            document.getElementById('destructuredData').innerHTML = 
+                `<span class="code-output">${id} ${name} ${department} ${marks}</span>`;
+
+            // 3. Spread operator with new grade
+            const updatedStudent = {
+                ...student,
+                grade: getGrade(marks)
+            };
+            document.getElementById('updatedData').innerHTML = 
+                `<span class="code-output">${JSON.stringify(updatedStudent, null, 2)}</span>`;
+        }
+
+        function clearOutput() {
+            document.getElementById('originalData').innerHTML = '';
+            document.getElementById('destructuredData').innerHTML = '';
+            document.getElementById('updatedData').innerHTML = '';
+        }
+
+        // Run demo on page load
+        window.onload = runDemo;
+    </script>
+</body>
+</html>

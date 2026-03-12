@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Enrollment System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 40px;
+            font-size: 28px;
+        }
+        .course-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.3);
+        }
+        .course-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .instructor {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .demo-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border-left: 5px solid #4299e1;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .section-title::before {
+            content: "▶";
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .output {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            min-height: 60px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+        }
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 2px solid #38a169;
+        }
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #e53e3e;
+        }
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .seat-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            gap: 15px;
+        }
+        .seat-status {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .seat-available {
+            color: #38a169;
+        }
+        .seat-full {
+            color: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Course Enrollment System</h1>
+        
+        <div class="course-card">
+            <div class="course-title">Course: Web Technologies</div>
+            <div class="instructor">Instructor: Dr. Kumar</div>
+        </div>
+
+        <div class="demo-section">
+            <div class="section-title">Course Details Display</div>
+            <div id="courseOutput" class="output">Click "Run Enrollment" to see output...</div>
+        </div>
+
+        <div class="demo-section">
+            <div class="section-title">Enrollment Status</div>
+            <div id="statusOutput" class="output">Click "Run Enrollment" to see promise result...</div>
+        </div>
+
+        <div class="seat-toggle">
+            <label class="seat-status" id="seatStatus">Seats: <span class="seat-available">Available</span></label>
+            <input type="checkbox" id="seatToggle">
+            <label for="seatToggle" style="font-weight: bold;">Toggle Seats</label>
+        </div>
+
+        <div class="controls">
+            <button onclick="runEnrollment()">Run Enrollment</button>
+            <button onclick="clearAll()">Clear Output</button>
+        </div>
+    </div>
+
+    <script>
+        class Course {
+            constructor(courseName, instructor) {
+                this.courseName = courseName;
+                this.instructor = instructor;
+            }
+            
+            displayCourse() {
+                return `Course: ${this.courseName}, Instructor: ${this.instructor}`;
+            }
+        }
+
+        const course1 = new Course("Web Technologies", "Dr. Kumar");
+
+        function getEnrollmentPromise(seatsAvailable) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    if (seatsAvailable) {
+                        resolve("Enrollment Successful");
+                    } else {
+                        reject("Course Full");
+                    }
+                }, 1000);
+            });
+        }
+
+        function updateSeatStatus(available) {
+            const statusEl = document.getElementById('seatStatus');
+            const span = statusEl.querySelector('span');
+            if (available) {
+                span.textContent = 'Available';
+                span.className = 'seat-available';
+            } else {
+                span.textContent = 'Full';
+                span.className = 'seat-full';
+            }
+        }
+
+        function runEnrollment() {
+            const seatsAvailable = !document.getElementById('seatToggle').checked;
+            updateSeatStatus(seatsAvailable);
+
+            // Display course details
+            document.getElementById('courseOutput').textContent = course1.displayCourse();
+
+            // Simulate enrollment promise
+            const enrollPromise = getEnrollmentPromise(seatsAvailable);
+            enrollPromise
+                .then(msg => {
+                    document.getElementById('statusOutput').textContent = msg;
+                    showStatus(msg, 'success');
+                })
+                .catch(err => {
+                    document.getElementById('statusOutput').textContent = err;
+                    showStatus(err, 'error');
+                });
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+            document.querySelector('.controls').before(statusDiv);
+            
+            setTimeout(() => statusDiv.remove(), 3000);
+        }
+
+        function clearAll() {
+            document.getElementById('courseOutput').textContent = '';
+            document.getElementById('statusOutput').textContent = '';
+            document.getElementById('seatToggle').checked = false;
+            updateSeatStatus(true);
+            document.querySelectorAll('.status').forEach(el => el.remove());
+        }
+
+        // Initialize
+        document.getElementById('seatToggle').addEventListener('change', () => {
+            updateSeatStatus(!document.getElementById('seatToggle').checked);
+        });
+
+        window.onload = () => {
+            document.getElementById('courseOutput').textContent = course1.displayCourse();
+        };
+    </script>
+</body>
+</html>
